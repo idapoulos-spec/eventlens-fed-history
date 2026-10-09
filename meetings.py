@@ -13,7 +13,8 @@ import pandas as pd
 NY = "America/New_York"
 PLAN = Path(__file__).resolve().parent / "PLAN.md"
 
-# Scheduled FOMC decisions (statement at 2:00 PM ET) and the expected Kalshi event suffix.
+# Scheduled FOMC decisions (statement at 2:00 PM ET), labelled as in PLAN.md's table. The Kalshi
+# event is the one whose markets close on the decision date (kalshi.py), whatever its ticker.
 PRIMARY = [
     ("2023-05-03", "23MAY"), ("2023-06-14", "23JUN"), ("2023-07-26", "23JUL"), ("2023-09-20", "23SEP"),
     ("2023-11-01", "23NOV"), ("2023-12-13", "23DEC"),
@@ -25,7 +26,6 @@ PRIMARY = [
 ]
 # In fed-oct's data window, so exploratory only (PLAN.md, exploratory check 8).
 EXPLORATORY = [("2026-07-29", "26JUL")]
-SERIES = "KXFEDDECISION"
 
 # NYSE full-day closures and 1:00 PM early closes, 2023-2026.
 HOLIDAYS = {dt.date.fromisoformat(d) for d in [
@@ -73,7 +73,7 @@ def ny(d, hour):
 def meetings(include_exploratory=False):
     rows = PRIMARY + (EXPLORATORY if include_exploratory else [])
     return [
-        {"decision": dt.date.fromisoformat(d), "suffix": s, "event": f"{SERIES}-{s}", "primary": (d, s) in PRIMARY}
+        {"decision": dt.date.fromisoformat(d), "meeting": s, "primary": (d, s) in PRIMARY}
         for d, s in rows
     ]
 
@@ -92,7 +92,7 @@ def intervals(meeting, sessions_before=SESSIONS_BEFORE):
         last = DECISION_LAST_HOUR if d == decision else close_hour(d)
         for h in range(FIRST_MARK_HOUR, last):
             rows.append({
-                "event": meeting["event"], "decision": decision, "session": d, "decision_day": d == decision,
+                "meeting": meeting["meeting"], "decision": decision, "session": d, "decision_day": d == decision,
                 "start": ny(d, h), "end": ny(d, h + 1),
             })
     return pd.DataFrame(rows)
@@ -103,7 +103,7 @@ def all_intervals(include_exploratory=False, sessions_before=SESSIONS_BEFORE):
 
 
 def plan_table():
-    """PLAN.md's meeting table as {decision: (event suffix, first session, last session)}."""
+    """PLAN.md's meeting table as {decision: (meeting label, first session, last session)}."""
     table = {}
     pattern = re.compile(r"^\| (?:\d+|—) \| (\d{4}-\d{2}-\d{2})[^|]*\| (\w+) \| ((?:\d{4}-)?\d{2}-\d{2}) → (\d{2}-\d{2})")
     for line in PLAN.read_text().splitlines():
@@ -124,11 +124,11 @@ def check_plan():
     for m in ms:
         sessions = window(m["decision"])[:-1]
         expected = table[m["decision"]]
-        got = (m["suffix"], sessions[0], sessions[-1])
+        got = (m["meeting"], sessions[0], sessions[-1])
         assert got == expected, f"{m['decision']}: computed {got}, PLAN.md says {expected}"
     primary = all_intervals()
-    n_sessions = primary.groupby(["event", "session"]).ngroups
-    assert (len(primary), n_sessions, primary["event"].nunique()) == (1661, 286, 26), (len(primary), n_sessions)
+    n_sessions = primary.groupby(["meeting", "session"]).ngroups
+    assert (len(primary), n_sessions, primary["meeting"].nunique()) == (1661, 286, 26), (len(primary), n_sessions)
     return len(table)
 
 

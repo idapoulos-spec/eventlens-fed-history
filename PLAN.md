@@ -228,4 +228,26 @@ Added beyond the requested list:
 
 ## Deviations
 
-None yet.
+### 2026-10-09: after the metadata audit (step 2), before any candles were read
+
+The audit read market tickers, titles, settlement rules, strikes, and open and close times. It read no prices, and no candles had been read at this point. The matched events and every outcome's mapping are in `results/kalshi_markets.csv`.
+
+1. **Event tickers.**
+   - In the store's `KXFEDDECISION` series, the 14 events before December 2024 are named `FEDDECISION-…`, not `KXFEDDECISION-…`. Two of them also break the `<YY><MON>` pattern: `FEDDECISION-24JAN31` and `FEDDECISION-24MAR20`.
+   - The matching rule hasn't changed: the event whose markets close on the decision date. It picks exactly one event per meeting.
+   - January 2024 has a second event for the same meeting, `FEDDECISION-24JAN`, whose markets closed on 2024-01-26. The rule doesn't pick it, so it isn't used.
+   - Each matched event opened more than 7 days before its window. All of an event's markets opened at the same time.
+2. **Irregular ticker suffixes.** The stop rule fired here, and the user decided how to proceed.
+   - `FEDDECISION-23DEC-C24` has a suffix that fits no convention. `FEDDECISION-23MAY-TC25` and `-TH50` use a `T` prefix that appears nowhere else.
+   - For all three, the title, subtitle, settlement rules and `custom_strike` agree. They read "Cut >25bps", "Cut >25bps" and "Hike >50bps".
+   - With the user's approval, an outcome with an irregular suffix is mapped by its settlement text:
+     - C24 and TC25 map to −50 bp.
+     - TH50 maps to +75 bp.
+     - In exploratory check 6 they map to −75, −75 and +100 bp.
+3. **Hold labels.** Depending on the event, the hold outcome is labelled "No change", "Hike 0bps", "No cut/hike" or "Fed maintains rate". All of these mean the rate is unchanged, so all map to Hold (0 bp).
+4. **A consequence of the rules, not a change to them: decision-day intervals.**
+   - Every market closes at 13:55 or 13:59 ET on the decision day.
+   - Under the rule that E is missing after the close, E(14:00) is missing. Each decision day therefore gives 3 intervals (10–13), not 4.
+   - The planned maximum becomes 1,635 intervals in 286 sessions.
+   - The user chose to keep the rule as written.
+5. `FEDDECISION-24JUN` lists 4 outcomes, with no "Hike >25bps". E is computed over the outcomes listed, as the plan says.
