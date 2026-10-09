@@ -154,6 +154,7 @@ class Outcome:
         self.info, self.ranges = info, ranges
         c = candles.sort_values("end_ts")
         self.ends = list(c["end_ts"])
+        self.ends_ns = np.array([e.value for e in self.ends], dtype=np.int64)
         self.books = [(None if pd.isna(b) else b / 1e6, None if pd.isna(a) else a / 1e6)
                       for b, a in zip(c["bid"], c["ask"])]
         self.estimates = [estimate(b, a) for b, a in self.books]
@@ -165,7 +166,7 @@ class Outcome:
 
     def at(self, t):
         """(p or None, rule or missing reason, liquid) at mark t."""
-        i = int(np.searchsorted(np.array(self.ends, dtype=object), t, side="right")) - 1 if self.ends else -1
+        i = int(np.searchsorted(self.ends_ns, t.value, side="right")) - 1
         has_recent = i >= 0 and self.ends[i] > t - LOOKBACK
         after = self.ends[i] if has_recent else max(t - LOOKBACK, self.info["open_time"])
         if not covered(self.ranges, after, t):
