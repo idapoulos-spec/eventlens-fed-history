@@ -165,21 +165,62 @@ def main(mode):
     exploratory = pd.DataFrame(rows)
     exploratory.to_csv(RESULTS / "exploratory.csv", index=False)
 
-    # Forest plot of the per-meeting estimates (exploratory 1), with the pooled primary estimate.
-    per = exploratory[(exploratory["check"] == "1 per meeting") & exploratory["b"].notna()]
-    fig, ax = plt.subplots(figsize=(7, 8))
-    ypos = np.arange(len(per))[::-1]
-    lo = (per["b"] - per["ci_low"]).clip(lower=0).fillna(0)
-    hi = (per["ci_high"] - per["b"]).clip(lower=0).fillna(0)
-    ax.errorbar(per["b"], ypos, xerr=[lo, hi], fmt="o", color="#3b6ea5", ecolor="#9db7d5", capsize=2)
-    ax.axvline(0, color="#888", lw=0.8)
-    ax.axvline(res["b"], color="#c0504d", lw=1, ls="--", label=f"pooled primary b = {res['b']:+.4f}")
-    ax.set_yticks(ypos, [f"{m}  (nonzero ΔE {k})" for m, k in zip(per["subset"], per["nonzero_dE"])], fontsize=8)
-    ax.set_xlabel("b: TLT % return per 1 bp rise in expected rate change (95% bootstrap interval)")
-    ax.set_title("Exploratory: per-meeting estimates (TLT on SPY and ΔE, hourly)", fontsize=10)
-    ax.legend(fontsize=8, loc="lower right")
-    fig.tight_layout()
-    fig.savefig(FIGURES / "per_meeting.png", dpi=150)
+    forest(exploratory[(exploratory["check"] == "1 per meeting")], res, FIGURES / "per_meeting.png")
+
+
+# Reference palette (dataviz skill): slot-1 blue for the marks, neutral ink for text and rules.
+INK, INK_2, MUTED, RULE, SURFACE, SERIES = "#0b0b0b", "#52514e", "#8a8984", "#e4e3df", "#fcfcfb", "#2a78d6"
+CLIP = 1.0  # x-axis half-width, % per bp: wider intervals are drawn to the edge with an arrow
+
+
+def forest(per, primary, path):
+    """Per-meeting b and 95% interval, clipped to ±CLIP so the narrow intervals stay readable."""
+    per = per.reset_index(drop=True)
+    fig, ax = plt.subplots(figsize=(7.2, 8.4), facecolor=SURFACE)
+    ax.set_facecolor(SURFACE)
+    y = np.arange(len(per))[::-1]
+    ax.axvline(0, color=MUTED, lw=0.8, zorder=1)
+    ax.axvline(primary["b"], color=INK_2, lw=1, ls=(0, (4, 3)), zorder=1)
+    ax.text(primary["b"], len(per) - 0.3, f" pooled primary b = {primary['b']:+.3f}", color=INK_2, fontsize=8,
+            ha="left", va="bottom")
+    labels = []
+    for yi, row in zip(y, per.itertuples()):
+        name = f"{row.subset}  ({row.nonzero_dE} hours ΔE moved)"
+        if pd.isna(row.b):
+            labels.append(f"{row.subset}  (ΔE never moved: not estimable)")
+            continue
+        lo, hi = max(row.ci_low, -CLIP), min(row.ci_high, CLIP)
+        ax.plot([lo, hi], [yi, yi], color=SERIES, lw=2, solid_capstyle="round", zorder=2)
+        for edge, clipped in ((lo, row.ci_low < -CLIP), (hi, row.ci_high > CLIP)):
+            if clipped:
+                ax.annotate("", xy=(edge, yi), xytext=(edge - 0.06 * np.sign(edge), yi),
+                            arrowprops={"arrowstyle": "-|>", "color": SERIES, "lw": 1.2})
+        if abs(row.b) <= CLIP:
+            ax.plot(row.b, yi, "o", ms=6, color=SERIES, mec=SURFACE, mew=1.5, zorder=3)
+        else:
+            ax.plot(np.sign(row.b) * CLIP, yi, ">" if row.b > 0 else "<", ms=7, color=SERIES, zorder=3)
+            ax.text(np.sign(row.b) * CLIP * 0.97, yi + 0.32, f"b = {row.b:+.1f}", color=INK_2, fontsize=7,
+                    ha="right" if row.b > 0 else "left")
+        if row.ci_low < -CLIP or row.ci_high > CLIP:
+            name += "  †"
+        labels.append(name)
+    ax.set_yticks(y, labels, fontsize=8, color=INK)
+    ax.set_xlim(-CLIP * 1.05, CLIP * 1.05)
+    ax.set_ylim(-0.8, len(per) + 0.4)
+    ax.tick_params(axis="x", colors=INK_2, labelsize=8)
+    ax.tick_params(axis="y", length=0)
+    ax.grid(axis="x", color=RULE, lw=0.6)
+    ax.set_axisbelow(True)
+    for side in ("top", "right", "left"):
+        ax.spines[side].set_visible(False)
+    ax.spines["bottom"].set_color(RULE)
+    ax.set_xlabel("b: TLT % return per 1 bp rise in the expected rate change (95% bootstrap interval)",
+                  color=INK_2, fontsize=8)
+    ax.set_title("Exploratory check 1: per-meeting estimates", color=INK, fontsize=10, loc="left")
+    fig.text(0.01, 0.005, f"† interval runs past ±{CLIP:g}; arrows mark the cut. Not a confirmatory test.",
+             color=MUTED, fontsize=7)
+    fig.tight_layout(rect=(0, 0.02, 1, 1))
+    fig.savefig(path, dpi=150, facecolor=SURFACE)
 
 
 if __name__ == "__main__":
