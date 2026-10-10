@@ -251,3 +251,29 @@ The audit read market tickers, titles, settlement rules, strikes, and open and c
    - The planned maximum becomes 1,635 intervals in 286 sessions.
    - The user chose to keep the rule as written.
 5. `FEDDECISION-24JUN` lists 4 outcomes, with no "Hike >25bps". E is computed over the outcomes listed, as the plan says.
+
+### 2026-10-10: rule for choosing the primary design, fixed before the daily power simulation and before any stock data
+
+The a priori power simulation (commit `e60121d`) put the hourly design's minimum detectable effect (MDE) at 0.538 residual sd per bp. For a 25 bp repricing, that's a TLT move of 2.7%, 4.0% and 5.4% at σ = 0.20, 0.30 and 0.40% per hour. The hourly intervals can't include the 8:30 ET data releases, which come before the open. At the user's request, the daily design's power is simulated the same way, from Kalshi data only. This rule, fixed before that simulation runs, decides which test is primary:
+
+- **Rule.** If the daily design's MDE, in TLT % per 25 bp repricing, is at most two-thirds of the hourly design's, the daily close-to-close test becomes the primary confirmatory test, with the same model, bootstrap and decision rule. The hourly test then becomes exploratory. Otherwise the hourly test stays primary.
+- **Daily design.** This is exploratory check 4's design:
+  - For each of the 26 primary meetings, the 10 sessions before the decision day. Decision days are excluded.
+  - ΔE is the change in E between consecutive session closes (16:00 ET, or 13:00 on 2025-11-28). The first runs from the close of the session before the window.
+  - That gives up to 260 intervals.
+  - Each session is its own cluster, so there's one bootstrap weight per observation.
+- **Daily simulation.** The same as the hourly simulation:
+  - Same noise model and parameters: Student-t(4), a lognormal multiplier per session (sd of log 0.3), volatility doubled where |ΔE| ≥ 0.25 bp, overall sd 1.
+  - Same procedure: 2,000 datasets per θ, 399 draws, a grid that brackets 80%, interpolation, then a confirmation run.
+  - Run on the daily ΔE series, with seed 20261011.
+  - The MDE comes out in daily residual sd per bp.
+- **Putting both MDEs in TLT % per 25 bp.** The two MDEs are in different units, so the comparison needs the ratio of daily to hourly residual sd. That ratio is fixed here by assumption, not estimated:
+  - TLT's residual variance builds up at the hourly rate over the 6.5 hours from 9:30 to 16:00.
+  - One-third of its close-to-close variance comes outside those hours, which is when the 8:30 ET releases fall.
+  - So σ_daily = √(6.5 / (2/3)) · σ_hourly ≈ 3.12 · σ_hourly.
+  - The rule compares 25 · θ_daily · 3.12 · σ_hourly with 25 · θ_hourly · σ_hourly, so σ_hourly cancels.
+  - The ratio is also reported for outside shares of 20% and 50% (factors 2.85 and 3.61), but the rule uses one-third.
+- **If the daily test becomes primary:**
+  - Its MDE replaces the hourly one in the "Not detected" reading of the decision rule.
+  - The hourly test joins the exploratory list, and exploratory checks 1–3 and 5–9 stay as exploratory variants of it.
+  - Check 4's by-year and meeting-clustered daily versions stay exploratory.
