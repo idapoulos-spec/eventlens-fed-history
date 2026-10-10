@@ -1,5 +1,7 @@
 # Kalshi expected rate change and TLT across 26 Fed meetings: one-page summary
 
+**Headline.** Inconclusive. The estimate (b̂ = −0.032 % per bp, p = 0.18) has the predicted sign and is consistent with the October study, but the pre-data power analysis showed the design could reliably detect only effects about 3 times larger (2.7% or more on TLT per 25 bp, against an estimate of −0.8%).
+
 **Question.** Across past Fed meetings, when Kalshi's market-implied expected rate change rises, does TLT fall beyond what SPY explains? This is an out-of-sample follow-up to my October 2026 study ([fed-oct](../fed-oct/SUMMARY.md)), which found TLT moving with the hold probability.
 
 **Data.**
@@ -34,7 +36,7 @@
   - Leaving any one of them out keeps b̂ between −0.021 and −0.067, with p from 0.11 to 0.29. The decision never changes, but the p-value and interval are fragile.
 
 **Exploratory checks (pre-registered, not confirmatory).** By year, excluding decision days, daily data, meeting-level clustering, alternative outcome mapping, liquid books only, adding July 2026, and a shorter window:
-- Every pooled variant is negative, with p from 0.08 to 0.65.
+- Every pooled variant is negative, with p from 0.08 to 0.65. They reuse the primary test's data (the same meetings, intervals and E series), so the consistent negative sign isn't independent confirmation.
 - 1 of 40 exploratory tests has p < 0.05, about what chance predicts.
 
 **What moves the market's expectations (post-hoc).** Nine of the eleven most influential hours line up with identifiable news, and in each one E moved the way the news implies:

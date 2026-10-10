@@ -152,6 +152,7 @@ The pre-committed rule would have made the daily test primary if its MDE was at 
 
 **Reading the exploratory checks:**
 - Every pooled variant is negative, with p between 0.08 and 0.65.
+- The variants reuse the primary test's data: the same meetings, intervals and E series, cut or reweighted differently. Their consistent negative sign is therefore not independent confirmation. It mostly shows that no single choice of specification is driving the estimate.
 - The lone p < 0.05, daily 2025, is one subsample out of 40 tests and shouldn't be given weight.
 
 ## Post-hoc diagnostics (added after the primary result; not in the plan)
