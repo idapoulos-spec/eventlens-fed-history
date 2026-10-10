@@ -6,6 +6,9 @@ Primary (confirmatory): pooled OLS over the 26 primary meetings,
 returns in % over hourly intervals within a session, ΔE in bp. The test is a wild cluster restricted
 bootstrap by session (inference.py: Webb weights, 9,999 draws, seed 20261009), two-sided at 5%.
 The prediction is b < 0.
+
+    python analysis.py primary   # the confirmatory test only
+    python analysis.py           # then the exploratory checks
 """
 
 import json
@@ -105,7 +108,7 @@ def decision(res):
     return "Not detected"
 
 
-def main():
+def main(mode):
     RESULTS.mkdir(exist_ok=True)
     FIGURES.mkdir(exist_ok=True)
     hourly = hourly_sample()
@@ -129,6 +132,8 @@ def main():
     res["ci_excludes_minus_mde"] = bool(res["ci_low"] > -mde_b)
     pd.Series(res).to_csv(RESULTS / "primary.csv", header=["value"])
     print("PRIMARY:", pd.Series(res).to_string(), sep="\n")
+    if mode == "primary":
+        return
 
     # ---- Exploratory ----
     rows = []
@@ -178,4 +183,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    main(sys.argv[1] if len(sys.argv) > 1 else "all")
