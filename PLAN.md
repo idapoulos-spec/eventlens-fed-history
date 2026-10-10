@@ -277,3 +277,20 @@ The a priori power simulation (commit `e60121d`) put the hourly design's minimum
   - Its MDE replaces the hourly one in the "Not detected" reading of the decision rule.
   - The hourly test joins the exploratory list, and exploratory checks 1–3 and 5–9 stay as exploratory variants of it.
   - Check 4's by-year and meeting-clustered daily versions stay exploratory.
+
+### 2026-10-10: the rule's outcome — the hourly test stays primary
+
+Run after the rule was committed (`bcb5243`), still before any stock data was fetched. The results are in `results/power_daily.csv`, `results/power_daily_summary.csv` and `results/power_comparison.csv`.
+
+- **Daily design.**
+  - 260 intervals (26 meetings × 10 sessions), 192 of them with a nonzero ΔE.
+  - The sd of ΔE is 0.91 bp per day.
+  - With no effect, the test rejects 5.2% of the time two-sided.
+  - MDE: 0.281 daily residual sd per bp, a partial correlation of 0.25. The confirmation run gave 0.81 ± 0.01 power.
+- **Hourly design.** MDE 0.538 hourly residual sd per bp (`e60121d`).
+- **Comparison.**
+  - In TLT % per 25 bp, with σ_daily = 3.12 · σ_hourly, the daily MDE is **1.63 times** the hourly one. The threshold was at most 0.667.
+  - **The hourly test stays the primary confirmatory test.** The daily test stays exploratory check 4.
+- **The decision doesn't depend on the assumed outside share.**
+  - With outside shares of 20% and 50%, the ratio is 1.49 and 1.88.
+  - Even with no variance outside trading hours (σ_daily = √6.5 · σ_hourly), it would be 1.33.

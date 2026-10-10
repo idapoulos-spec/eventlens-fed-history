@@ -1,0 +1,4 @@
+outside_share,used_by_rule,sigma_daily_over_hourly,mde_ratio_daily_to_hourly,daily_at_most_two_thirds,hourly_tlt_pct_per_25bp_sigma_h_0.20,hourly_tlt_pct_per_25bp_sigma_h_0.30,hourly_tlt_pct_per_25bp_sigma_h_0.40,daily_tlt_pct_per_25bp_sigma_h_0.20,daily_tlt_pct_per_25bp_sigma_h_0.30,daily_tlt_pct_per_25bp_sigma_h_0.40
+0.2,False,2.8504,1.4889,False,2.6906,4.036,5.3813,4.0061,6.0092,8.0123
+0.3333,True,3.1225,1.631,False,2.6906,4.036,5.3813,4.3885,6.5828,8.777
+0.5,False,3.6056,1.8833,False,2.6906,4.036,5.3813,5.0674,7.6011,10.1348

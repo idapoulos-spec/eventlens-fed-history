@@ -3,6 +3,7 @@ build the expected rate change E(t) at every hour mark.
 
     python kalshi.py audit   # metadata only (no prices): writes results/kalshi_markets.csv
     python kalshi.py build   # E(t) into data/kalshi/ (gitignored), counts into results/
+    python kalshi.py daily   # close-to-close ΔE from the built marks into data/kalshi/daily.csv
 
 Store units: prices are integer micro-dollars, null when Kalshi left the value out.
 """
@@ -260,6 +261,31 @@ def hourly_intervals(marks):
     return out
 
 
+def daily_intervals(marks):
+    """Close-to-close ΔE over each meeting's pre-decision sessions (exploratory check 4, and
+    PLAN.md's 2026-10-10 deviation), the first from the close of the session before the window."""
+    marks = marks.copy()
+    marks["t"] = pd.to_datetime(marks["t"], utc=True).dt.tz_convert(M.NY)
+    marks["open_set"] = marks["open_set"].fillna("")
+    keyed = marks.set_index(["meeting", "t"])
+    rows = []
+    for meeting in M.meetings(include_exploratory=True):
+        sessions = M.window(meeting["decision"])[:-1]
+        closes = M.previous_sessions(sessions[0], 1) + sessions
+        for d0, d1 in zip(closes, closes[1:]):
+            a = keyed.loc[(meeting["meeting"], M.ny(d0, M.close_hour(d0)))]
+            b = keyed.loc[(meeting["meeting"], M.ny(d1, M.close_hour(d1)))]
+            ok = pd.notna(a["E"]) and pd.notna(b["E"]) and a["open_set"] == b["open_set"]
+            rows.append({
+                "meeting": meeting["meeting"], "primary": meeting["primary"], "decision": meeting["decision"],
+                "session": d1, "prev_session": d0,
+                "start": M.ny(d0, M.close_hour(d0)), "end": M.ny(d1, M.close_hour(d1)),
+                "dE": b["E"] - a["E"] if ok else np.nan, "dE_alt": b["E_alt"] - a["E_alt"] if ok else np.nan,
+                "liquid": bool(ok and a["liquid"] and b["liquid"]),
+            })
+    return pd.DataFrame(rows)
+
+
 def diagnostics(outcomes, marks, rules, intervals):
     rows = []
     window_marks = marks[marks["in_window"]]
@@ -286,6 +312,13 @@ def diagnostics(outcomes, marks, rules, intervals):
 
 
 def main(mode):
+    if mode == "daily":
+        daily = daily_intervals(pd.read_csv(DATA / "marks.csv"))
+        daily.to_csv(DATA / "daily.csv", index=False)
+        primary = daily[daily["primary"]]
+        print(f"daily primary: {primary['dE'].notna().sum()} of {len(primary)} intervals have ΔE; "
+              f"{(primary['dE'].abs() > 1e-12).sum()} nonzero")
+        return
     RESULTS.mkdir(exist_ok=True)
     with connect() as conn:
         outcomes = audit(conn)

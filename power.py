@@ -6,8 +6,18 @@ lognormal volatility multiplier per session (sd of log 0.3), doubled in interval
 |ΔE| ≥ 0.25 bp, and scaled to overall sd 1. θ is therefore in units of σ per bp. The stand-in
 for SPY is simulated once, independently of ΔE. Each dataset is tested as in the primary test,
 with 399 bootstrap draws. Power is the share of datasets with p < 0.05 and b̂ < 0.
+
+    python power.py hourly    # the planned primary design (results/power*.csv)
+    python power.py daily     # close-to-close design (results/power_daily*.csv)
+    python power.py compare   # PLAN.md's 2026-10-10 rule: which design is primary
+
+The daily design has one observation per session, so θ is in daily residual sd per bp. The
+comparison puts both MDEs in TLT % per 25 bp with the fixed ratio σ_daily = √(6.5 / (1 − s)) · σ_hourly,
+where s, the share of close-to-close variance outside 9:30–16:00, is 1/3. Shares of 0.2 and 0.5
+are reported as sensitivity only.
 """
 
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -17,7 +27,6 @@ from inference import ALPHA, SEED, WildClusterTest
 
 HERE = Path(__file__).resolve().parent
 RESULTS = HERE / "results"
-POWER_SEED = SEED + 1
 DATASETS = 2_000
 DRAWS = 399
 TARGET = 0.80
@@ -26,8 +35,23 @@ NEWS_BP, NEWS_SCALE = 0.25, 2.0
 SIGMAS = (0.20, 0.30, 0.40)  # TLT residual sd, % per hour
 
 
-def design():
-    iv = pd.read_csv(HERE / "data" / "kalshi" / "intervals.csv")
+def daily_factor(outside_share):
+    return np.sqrt(6.5 / (1 - outside_share))
+
+
+OUTSIDE_SHARE = 1 / 3
+SENSITIVITY_SHARES = (0.2, 0.5)
+SWITCH_RATIO = 2 / 3
+DESIGNS = {
+    "hourly": {"file": "intervals.csv", "seed": SEED + 1, "out": "power", "sigmas": SIGMAS},
+    # Daily residual sd matching each hourly σ under the rule's one-third outside share, % per day.
+    "daily": {"file": "daily.csv", "seed": SEED + 2, "out": "power_daily",
+              "sigmas": tuple(daily_factor(OUTSIDE_SHARE) * s for s in SIGMAS)},
+}
+
+
+def design(kind):
+    iv = pd.read_csv(HERE / "data" / "kalshi" / DESIGNS[kind]["file"])
     iv = iv[iv["primary"] & iv["dE"].notna()].reset_index(drop=True)
     sessions = pd.factorize(iv["session"])[0]
     return iv["dE"].to_numpy(), sessions
@@ -49,9 +73,10 @@ def power_at(theta, test, dE, sessions, h, scale, rng, datasets=DATASETS):
     return detect / datasets, reject / datasets
 
 
-def main():
-    rng = np.random.default_rng(POWER_SEED)
-    dE, sessions = design()
+def simulate(kind):
+    spec = DESIGNS[kind]
+    rng = np.random.default_rng(spec["seed"])
+    dE, sessions = design(kind)
     n, G = len(dE), sessions.max() + 1
     h = np.where(np.abs(dE) >= NEWS_BP, NEWS_SCALE, 1.0)
     # E[m^2] = exp(2 * 0.3^2) for the lognormal multiplier; t(4)/sqrt(2) has unit variance.
@@ -104,15 +129,38 @@ def main():
         "mde_theta_sigma_per_bp": mde, "mde_confirmed_power": confirm,
         "mde_confirmed_mc_se": np.sqrt(confirm * (1 - confirm) / DATASETS),
         "mde_partial_r": r_mde,
-        **{f"mde_b_pct_per_bp_sigma_{s:.2f}": mde * s for s in SIGMAS},
-        **{f"mde_tlt_pct_per_25bp_sigma_{s:.2f}": 25 * mde * s for s in SIGMAS},
-        "seed": POWER_SEED, "datasets_per_theta": DATASETS, "draws": DRAWS,
+        **{f"mde_b_pct_per_bp_sigma_{s:.2f}": mde * s for s in spec["sigmas"]},
+        **{f"mde_tlt_pct_per_25bp_sigma_{s:.2f}": 25 * mde * s for s in spec["sigmas"]},
+        "seed": spec["seed"], "datasets_per_theta": DATASETS, "draws": DRAWS,
     }
     RESULTS.mkdir(exist_ok=True)
-    grid.round(5).to_csv(RESULTS / "power.csv", index=False)
-    pd.Series(summary).to_csv(RESULTS / "power_summary.csv", header=["value"])
+    grid.round(5).to_csv(RESULTS / f"{spec['out']}.csv", index=False)
+    pd.Series(summary).to_csv(RESULTS / f"{spec['out']}_summary.csv", header=["value"])
     print(pd.Series(summary).to_string())
 
 
+def compare():
+    """Apply PLAN.md's 2026-10-10 rule to the two committed MDEs."""
+    theta = {kind: pd.read_csv(RESULTS / f"{spec['out']}_summary.csv", index_col=0)["value"]["mde_theta_sigma_per_bp"]
+             for kind, spec in DESIGNS.items()}
+    rows = []
+    for share in sorted((OUTSIDE_SHARE, *SENSITIVITY_SHARES)):
+        k = daily_factor(share)
+        ratio = theta["daily"] * k / theta["hourly"]
+        rows.append({
+            "outside_share": round(share, 4), "used_by_rule": share == OUTSIDE_SHARE, "sigma_daily_over_hourly": k,
+            "mde_ratio_daily_to_hourly": ratio, "daily_at_most_two_thirds": ratio <= SWITCH_RATIO,
+            **{f"hourly_tlt_pct_per_25bp_sigma_h_{s:.2f}": 25 * theta["hourly"] * s for s in SIGMAS},
+            **{f"daily_tlt_pct_per_25bp_sigma_h_{s:.2f}": 25 * theta["daily"] * k * s for s in SIGMAS},
+        })
+    out = pd.DataFrame(rows)
+    out.round(4).to_csv(RESULTS / "power_comparison.csv", index=False)
+    print(out.round(3).T.to_string())
+    decided = out[out["used_by_rule"]].iloc[0]
+    print("primary:", "DAILY" if decided["daily_at_most_two_thirds"] else "HOURLY",
+          f"(ratio {decided['mde_ratio_daily_to_hourly']:.3f}, threshold {SWITCH_RATIO:.3f})")
+
+
 if __name__ == "__main__":
-    main()
+    kind = sys.argv[1] if len(sys.argv) > 1 else "hourly"
+    compare() if kind == "compare" else simulate(kind)
