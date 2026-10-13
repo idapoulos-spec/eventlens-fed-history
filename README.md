@@ -12,7 +12,7 @@ Across the 26 FOMC meetings from May 2023 to June 2026, when Kalshi's market-imp
 
 ## Pre-registered
 
-The plan was committed (`676211d`, 2026-10-09) before any data was read. Each later choice was committed before the data it affected was seen, and the power analysis was committed before any stock data was fetched. Run `git log --reverse` to see the sequence. [WRITEUP.md](WRITEUP.md#what-was-fixed-and-when) has a table of what each commit fixed and what data had been seen by then.
+The plan was committed (`20a71a4`, 2026-10-09) before any data was read. Each later choice was committed before the data it affected was seen, and the power analysis was committed before any stock data was fetched. Run `git log --reverse` to see the sequence. [WRITEUP.md](WRITEUP.md#what-was-fixed-and-when) has a table of what each commit fixed and what data had been seen by then.
 
 ## Reproduce
 

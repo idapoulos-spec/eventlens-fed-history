@@ -20,15 +20,15 @@ Each step was committed before the next one started.
 
 | Commit | Date | What it fixed | Data seen by then |
 |---|---|---|---|
-| `676211d` | 2026-10-09 | The plan: sample, E(t) rules, window, model, bootstrap, decision rule, exploratory list | none |
-| `95d462b` | 2026-10-09 | Metadata audit: event matching and outcome mapping, with three deviations the user approved | market titles and times only, no prices |
-| `66140d0` | 2026-10-09 | Kalshi E(t) and its diagnostics | Kalshi quotes |
-| `e60121d` | 2026-10-10 | A priori power for the hourly design | Kalshi only |
-| `bcb5243` | 2026-10-10 | A rule for choosing the hourly or the daily design as primary | Kalshi only |
-| `61ac0d0` | 2026-10-10 | The rule's outcome: **hourly stays primary** | Kalshi only |
-| `c12713d` | 2026-10-10 | Stock bars fetched; analysis script committed before it was run | stock bars, no results |
-| `31b7f44` | 2026-10-10 | **Primary result** | — |
-| `8419daa` | 2026-10-10 | Exploratory checks 1–9 | — |
+| `20a71a4` | 2026-10-09 | The plan: sample, E(t) rules, window, model, bootstrap, decision rule, exploratory list | none |
+| `21b113b` | 2026-10-09 | Metadata audit: event matching and outcome mapping, with three deviations the user approved | market titles and times only, no prices |
+| `a8e56a0` | 2026-10-09 | Kalshi E(t) and its diagnostics | Kalshi quotes |
+| `4ef99ea` | 2026-10-10 | A priori power for the hourly design | Kalshi only |
+| `3808a78` | 2026-10-10 | A rule for choosing the hourly or the daily design as primary | Kalshi only |
+| `de36c33` | 2026-10-10 | The rule's outcome: **hourly stays primary** | Kalshi only |
+| `47bceb8` | 2026-10-10 | Stock bars fetched; analysis script committed before it was run | stock bars, no results |
+| `e565e7e` | 2026-10-10 | **Primary result** | — |
+| `01a5d81` | 2026-10-10 | Exploratory checks 1–9 | — |
 
 ## Data
 
