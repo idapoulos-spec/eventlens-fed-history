@@ -254,7 +254,7 @@ The audit read market tickers, titles, settlement rules, strikes, and open and c
 
 ### 2026-10-10: rule for choosing the primary design, fixed before the daily power simulation and before any stock data
 
-The a priori power simulation (commit `e60121d`) put the hourly design's minimum detectable effect (MDE) at 0.538 residual sd per bp. For a 25 bp repricing, that's a TLT move of 2.7%, 4.0% and 5.4% at σ = 0.20, 0.30 and 0.40% per hour. The hourly intervals can't include the 8:30 ET data releases, which come before the open. At the user's request, the daily design's power is simulated the same way, from Kalshi data only. This rule, fixed before that simulation runs, decides which test is primary:
+The a priori power simulation (commit `4ef99ea`) put the hourly design's minimum detectable effect (MDE) at 0.538 residual sd per bp. For a 25 bp repricing, that's a TLT move of 2.7%, 4.0% and 5.4% at σ = 0.20, 0.30 and 0.40% per hour. The hourly intervals can't include the 8:30 ET data releases, which come before the open. At the user's request, the daily design's power is simulated the same way, from Kalshi data only. This rule, fixed before that simulation runs, decides which test is primary:
 
 - **Rule.** If the daily design's MDE, in TLT % per 25 bp repricing, is at most two-thirds of the hourly design's, the daily close-to-close test becomes the primary confirmatory test, with the same model, bootstrap and decision rule. The hourly test then becomes exploratory. Otherwise the hourly test stays primary.
 - **Daily design.** This is exploratory check 4's design:
@@ -280,14 +280,14 @@ The a priori power simulation (commit `e60121d`) put the hourly design's minimum
 
 ### 2026-10-10: the rule's outcome — the hourly test stays primary
 
-Run after the rule was committed (`bcb5243`), still before any stock data was fetched. The results are in `results/power_daily.csv`, `results/power_daily_summary.csv` and `results/power_comparison.csv`.
+Run after the rule was committed (`3808a78`), still before any stock data was fetched. The results are in `results/power_daily.csv`, `results/power_daily_summary.csv` and `results/power_comparison.csv`.
 
 - **Daily design.**
   - 260 intervals (26 meetings × 10 sessions), 192 of them with a nonzero ΔE.
   - The sd of ΔE is 0.91 bp per day.
   - With no effect, the test rejects 5.2% of the time two-sided.
   - MDE: 0.281 daily residual sd per bp, a partial correlation of 0.25. The confirmation run gave 0.81 ± 0.01 power.
-- **Hourly design.** MDE 0.538 hourly residual sd per bp (`e60121d`).
+- **Hourly design.** MDE 0.538 hourly residual sd per bp (`4ef99ea`).
 - **Comparison.**
   - In TLT % per 25 bp, with σ_daily = 3.12 · σ_hourly, the daily MDE is **1.63 times** the hourly one. The threshold was at most 0.667.
   - **The hourly test stays the primary confirmatory test.** The daily test stays exploratory check 4.
