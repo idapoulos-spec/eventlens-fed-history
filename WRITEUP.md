@@ -12,7 +12,7 @@ This document has three parts, kept separate on purpose:
 
 Across past Fed meetings, when the Kalshi market-implied expected rate change for the upcoming meeting rises, does TLT fall beyond what SPY explains?
 
-This is an out-of-sample follow-up to [`../fed-oct`](../fed-oct/SUMMARY.md). That study found that TLT rose with the October 2026 hold probability over Jul 8 – Oct 5, 2026. None of its hours are in this study's primary sample.
+This is an out-of-sample follow-up to fed-oct, an earlier study of mine that isn't in this repo. It found that TLT rose with Kalshi's October 2026 hold probability in hourly data from Jul 8 to Oct 5, 2026, a pre-registered finding that was fragile under a better-calibrated test. None of its hours are in this study's primary sample.
 
 ## What was fixed, and when
 

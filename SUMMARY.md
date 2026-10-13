@@ -2,7 +2,7 @@
 
 **Headline.** Inconclusive. The estimate (b̂ = −0.032 % per bp, p = 0.18) has the predicted sign and is consistent with the October study, but the pre-data power analysis showed the design could reliably detect only effects about 3 times larger (2.7% or more on TLT per 25 bp, against an estimate of −0.8%).
 
-**Question.** Across past Fed meetings, when Kalshi's market-implied expected rate change rises, does TLT fall beyond what SPY explains? This is an out-of-sample follow-up to my October 2026 study ([fed-oct](../fed-oct/SUMMARY.md)), which found TLT moving with the hold probability.
+**Question.** Across past Fed meetings, when Kalshi's market-implied expected rate change rises, does TLT fall beyond what SPY explains? This is an out-of-sample follow-up to fed-oct, an earlier study of mine that isn't in this repo, which found TLT rising with Kalshi's October 2026 hold probability in hourly data from Jul 8 to Oct 5, 2026 (a pre-registered finding, but fragile under a better-calibrated test).
 
 **Data.**
 - **Kalshi:** hourly quotes for every outcome market of the 26 FOMC meetings from May 2023 to June 2026, read from my EventLens database.
